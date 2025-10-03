@@ -66,7 +66,7 @@ pip install "mcp[cli]"
 ```json
 {
   "mcpServers": {
-    "Weather-Demo": {
+    "Personal-Assistant": {
       "command": "uv",
       "args": [
         "--directory",
