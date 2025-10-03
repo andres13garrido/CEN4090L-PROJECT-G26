@@ -50,7 +50,7 @@ source .venv/bin/activate
 
 ### 4. Install the dependencies
 ```bash
-uv pip install -e .
+pip install aiohttp fastmcp python-dotenv
 
 pip install "mcp[cli]"
 ```
