@@ -86,3 +86,36 @@ mcp dev main.py
 ```
 ### Here you can see if the API is actually being called. 
 
+
+
+# Kepp integrating 
+ ## Whenever someone wants to add a new Tool, that is not related to any of the previous ones should be in filepath/Personal-Assistant and here 
+
+ '''bash
+ uv init NAMEOFMCPSERVER
+ 
+ uv venv 
+
+
+source .venv/bin/activate
+ '''
+
+ ### Start developing the API call and the functions that you waant it to be doijing
+
+
+ ### After you finish developing, should add the new MCP to the CONFIG.JSON in claude desktop 
+ ```json
+{
+  "mcpServers": {
+    "Weather-Demo": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/directory/(newMCP) Filename",
+        "run",
+        "main.py"
+      ]
+    }
+  }
+}
+```

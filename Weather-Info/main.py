@@ -22,6 +22,8 @@ mcp = FastMCP("Weather-Info")
 async def location_id(location: str):
     async with ClientSession() as session:
         location_search_url = f"{base_url}/locations/v1/cities/search"
+        if not api_key:
+            return f"No API key available"
         params = {
             "apikey": api_key,
             "q": location,
@@ -36,7 +38,7 @@ async def location_id(location: str):
 
 # Call the weather API and then return weather
 @mcp.tool()
-async def weather(city: str):
+async def get_current_weather(city: str):
     """ 
     Give me the weather for the city that the user gave you using this function. 
     """
@@ -67,6 +69,33 @@ async def weather(city: str):
     except Exception as e:
         return f"Error retrieving weather: {str(e)}"
 
+@mcp.tool()
+async def get_weather_forecast(city: str): 
+    """Get the 5-day weather forecast for a city."""
+    try: 
+        city_key = await location_id(city)
+        
+        if not city_key: 
+            return "No city key found"
+        
+        async with ClientSession() as session:
+            forecast_url = f"{base_url}/forecasts/v1/daily/5day/{city_key}"
+            params = {
+                "apikey": api_key,
+                "metric": "true"
+            }
+            async with session.get(forecast_url, params=params) as response:
+                if response.status != 200:
+                    return f"Failed to retrieve forecast: {response.status}"
+                data = await response.json()
+                
+                # Convert the entire response to a JSON string
+                return json.dumps(data)
+
+    except Exception as e:
+        return f"Error retrieving the weather forecast: {str(e)}"
+
+    
 
 if __name__ == "__main__":
 
