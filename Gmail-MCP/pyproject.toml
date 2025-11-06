@@ -1,7 +1,12 @@
 [project]
 name = "gmail-mcp"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = []
+description = "Gmail MCP authentication and API project"
+dependencies = [
+    "python-dotenv",
+    "google-api-python-client",
+    "google-auth",
+    "google-auth-oauthlib",
+    "fastmcp",
+    "typing-extensions"
+]

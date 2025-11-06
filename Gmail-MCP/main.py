@@ -1,60 +1,49 @@
 import os
-from dotenv import load_dotenv
-from aiohttp import ClientSession
+import json
+import asyncio
+from mcp.server.fastmcp import FastMCP
 
-# Load and access the api key 
-load_dotenv(dotenv_path="../.env")
+# Your modules
+# Keep these imports exactly matching your structure
+from gmailapi import send_email, search_emails  # uses tools.gmail.auth.auth_gmail internally
 
-# constants 
-api_key = os.getenv("WEATHER_API_KEY")
-base_url = "http://dataservice.accuweather.com"
+# Optional: .env support if you want GOOGLE_CREDENTIALS_FILE/GOOGLE_TOKEN_FILE
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
+mcp = FastMCP("Gmail-Tools")
 
-# Helper function to get the location ID where we want to find the weather
-async def location_id(location):
-    async with ClientSession() as session:
-        location_search_url = f"{base_url}/locations/v1/cities/search"
-        params = {
-            "apikey": api_key,
-            "q": location,
-        }
-        async with session.get(location_search_url, params=params) as response:
-            locations = await response.json()
-            if locations and len(locations) > 0:
-                location_key = locations[0]["Key"]
-                return location_key
-            return None
-
-
-# Call the weather API and then return weather
-async def get_weather(city: str) -> str:
-    """ 
-    Give me the weather for the city that the user gave you using this function. 
+@mcp.tool()
+async def gmail_send(to: str, subject: str, body: str, html: bool = False) -> dict:
     """
-    try:
-        # First get the location key
-        city_key = await location_id(city)
-        if not city_key:
-            return f"Did not find city: {city}"
-            
-        # Get current conditions
-        async with ClientSession() as session:
-            current_conditions_url = f"{base_url}/currentconditions/v1/{city_key}"
-            params = {
-                "apikey": api_key,
-                "metric": "true",
-            }
+    Send an email via Gmail API.
+    Args:
+      to: recipient email address (single)
+      subject: email subject
+      body: email body (plain text unless html=True)
+      html: set True if body is HTML
+    Returns:
+      { "id": "<messageId>" } or { "error": {...} }
+    """
+    # send_email is synchronous — run in thread
+    return await asyncio.to_thread(send_email, to=to, subject=subject, body=body, html=html)
 
-            async with session.get(current_conditions_url, params=params) as response:
-                current_conditions = await response.json()
-                
-                if current_conditions and len(current_conditions) > 0:
-                #     # Return the weather information as a formatted string
-                #     weather_text = current_conditions[0].get("WeatherText", "Unknown")
-                #     temperature = current_conditions[0].get("Temperature", {}).get("Metric", {}).get("Value", "Unknown")
-                    
-                    # return f"Current weather in {city}: {weather_text}, Temperature: {temperature}°C"
-                    return current_conditions
-    except Exception as e:
-        return f"Error retrieving weather: {str(e)}"
+@mcp.tool()
+async def gmail_search(query: str = "", limit: int = 10) -> dict:
+    """
+    Search emails via Gmail API.
+    Args:
+      query: Gmail search query (e.g., 'from:me is:unread newer_than:7d')
+      limit: max results
+    Returns:
+      { "messages": [ {id, threadId, snippet, ...}, ... ] } or { "error": {...} }
+    """
+    return await asyncio.to_thread(search_emails, query=query, limit=limit)
+
+if __name__ == "__main__":
+    # Claude/clients will connect via stdio
+    mcp.run(transport="stdio")
 
