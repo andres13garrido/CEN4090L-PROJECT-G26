@@ -1,4 +1,6 @@
+# auth.py
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from google.auth.transport.requests import Request
@@ -6,31 +8,47 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-load_dotenv()
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
-CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
-TOKEN = os.getenv("GOOGLE_TOKEN_FILE", "token.json")
 
-cache = None #in process cache
 
 def auth_gmail():
-    global cache
-    if cache is not None:
-        return cache
+    load_dotenv()
 
-    creds: Credentials | None= None
+    cred_path = Path(os.getenv("GOOGLE_CREDENTIALS", "credentials.json"))
+    token_path = Path(os.getenv("GOOGLE_TOKEN", "token.json"))
 
-    if Path(TOKEN).exists():  #load user saved tokens to login ig they exist
-        creds = Credentials.from_authorized_user_file(TOKEN, SCOPES)
+    # Basic diagnostics (optional; comment out later)
+    # print(f"CWD={os.getcwd()}\ncred={cred_path} exists={cred_path.exists()}\ntoken={token_path} exists={token_path.exists()}")
 
-    if not creds or not creds.valid: #if missing or invalid, runs or refreshes OAuth flow
+    creds = None
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+
+    if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request()) #has tokens, but needs to refresh silently
+            # Silent refresh if possible
+            creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS, SCOPES)
-            creds = flow.run_local_server(port=0) #no token yet, runs OAuth
-        with open(TOKEN, "w") as f: #persistence component
-            f.write(creds.to_json())
-    cache = build("gmail", "v1", credentials=creds)
-    return cache
+            # Fresh consent
+            flow = InstalledAppFlow.from_client_secrets_file(str(cred_path), SCOPES)
+            try:
+                # Opens a browser on a free port
+                creds = flow.run_local_server(port=0)
+            except Exception as e:
+                print(f"run_local_server failed: {e}", file=sys.stderr)
+                print("Falling back to console flow…", file=sys.stderr)
+                creds = flow.run_console()
 
+        token_path.write_text(creds.to_json(), encoding="utf-8")
+
+    return build("gmail", "v1", credentials=creds)
+
+if __name__ == "__main__":
+    # When you run: uv run python -m auth
+    try:
+        service = auth_gmail()
+        labels = service.users().labels().list(userId="me").execute().get("labels", [])
+        print("OK — OAuth works. First few labels:", [l["name"] for l in labels[:5]])
+    except Exception as e:
+        print(f"Auth test failed: {e}", file=sys.stderr)
+        sys.exit(1)
