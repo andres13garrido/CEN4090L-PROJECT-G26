@@ -6,8 +6,6 @@ from aiohttp import ClientSession
 import asyncio
 import sys
 
-
-
 # Load and access the api key 
 load_dotenv(dotenv_path=".env")
 
@@ -101,9 +99,3 @@ if __name__ == "__main__":
 
     mcp.run(transport="stdio")
 
-# mcp dev main.py         // Insert the API key into the environment variables // success 
-# But when I try it in claude it does not work it sasys that the module AIOHTTP it cannot ve read 
-
-#python3 ./main.py            
-
-#uv run mcp install main.py       
