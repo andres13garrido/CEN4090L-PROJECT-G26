@@ -8,4 +8,6 @@ dependencies = [
     "aiohttp>=3.13.0",
     "dotenv>=0.9.9",
     "mcp[cli]>=1.17.0",
+    "fastmcp>=0.4",
+    "python-dotenv>=1.0.1",
 ]

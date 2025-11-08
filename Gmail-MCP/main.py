@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 
 # Your modules
 # Keep these imports exactly matching your structure
-from gmailapi import send_email, search_emails  # uses tools.gmail.auth.auth_gmail internally
+from gmailapi import send_email, search_emails, gmail_delete, gmail_list_unread, gmail_reply
 
 # Optional: .env support if you want GOOGLE_CREDENTIALS_FILE/GOOGLE_TOKEN_FILE
 try:
@@ -42,6 +42,34 @@ async def gmail_search(query: str = "", limit: int = 10) -> dict:
       { "messages": [ {id, threadId, snippet, ...}, ... ] } or { "error": {...} }
     """
     return await asyncio.to_thread(search_emails, query=query, limit=limit)
+
+@mcp.tool()
+async def gmail_delete_tool(message_id: str, permanent: bool = True) -> dict:
+    """
+    Delete a Gmail message.
+    - permanent=True → permanently delete
+    - permanent=False → move to Trash
+    """
+    return await asyncio.to_thread(gmail_delete, message_id, permanent)
+
+@mcp.tool()
+async def gmail_list_unread_tool(limit: int = 10, in_inbox: bool = True) -> dict:
+    """
+    List unread messages (optionally restricted to inbox).
+    Returns message ID, thread ID, snippet, and headers (From, Subject, Date).
+    """
+    return await asyncio.to_thread(gmail_list_unread, limit, in_inbox)
+
+@mcp.tool()
+async def gmail_reply_tool(thread_id: str, body: str, html: bool = False, reply_all: bool = False) -> dict:
+    """
+    Reply to the latest message in a Gmail thread.
+    - thread_id: ID of the conversation to reply to
+    - body: reply text
+    - html: set True for HTML body
+    - reply_all: include original To/Cc recipients
+    """
+    return await asyncio.to_thread(gmail_reply, thread_id, body, html, reply_all)
 
 if __name__ == "__main__":
     # Claude/clients will connect via stdio
