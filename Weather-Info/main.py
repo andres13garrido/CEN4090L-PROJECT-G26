@@ -9,7 +9,7 @@ import sys
 
 
 # Load and access the api key
-load_dotenv(dotenv_path=r"C:\Users\fabio\Desktop\CEN4090L-PROJECT-G26\Gmail-MCP\.env")
+load_dotenv()
 
 # constants
 api_key = os.getenv("API_KEY")
