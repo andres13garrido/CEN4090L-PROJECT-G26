@@ -1,0 +1,17 @@
+[project]
+name = "news-mcp-user"
+version = "0.1.0"
+description = "MCP server: latest news about a user-specified topic via Google News RSS (no API key)"
+requires-python = ">=3.11"
+dependencies = [
+  "fastmcp",
+  "aiohttp",
+  "feedparser"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["news_user"]
